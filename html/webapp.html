@@ -1,0 +1,340 @@
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Snake Game</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            body {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-direction: column;
+                height: 100vh;
+                background-color: #87CEFA; /* Light blue sky color */
+                color: #fff;
+                font-family: Arial, sans-serif;
+            }
+            #game-container {
+                position: relative;
+                background-color: #654321; /* Dirt color */
+                border: 5px solid #fff;
+                padding: 10px;
+                width: 340px;
+                height: 340px;
+                overflow: hidden;
+                z-index: 1; /* Ensure it's behind the game rules */
+            }
+            canvas {
+                background-color: #6b4f31; /* Brown background */
+            }
+            #score {
+                font-size: 24px;
+                margin-bottom: 10px;
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                color: black; /* Change text color to black */
+                z-index: 2;
+            }
+            .plus-one {
+                font-size: 24px;
+                color: #0f0;
+                position: absolute;
+                visibility: hidden;
+                animation: plusOneAnimation 0.5s forwards;
+            }
+            @keyframes plusOneAnimation {
+                0% { visibility: visible; opacity: 1; }
+                100% { visibility: hidden; opacity: 0; }
+            }
+            .grass, .tree {
+                position: absolute;
+                bottom: 0;
+            }
+            .grass {
+                background-color: #228B22; /* Grass green color */
+                width: 100%;
+                height: 10px;
+            }
+            .tree {
+                background-color: #228B22; /* Tree foliage */
+                width: 30px;
+                height: 50px;
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                transform: translateX(-50%);
+                border-radius: 10px;
+            }
+            .tree-trunk {
+                background-color: #8B4513; /* Brown trunk color */
+                width: 10px;
+                height: 25px;
+                position: absolute;
+                bottom: 0;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+            #game-rules {
+                background-color: rgba(0, 0, 0, 0.5);
+                color: #fff;
+                font-size: 18px;
+                padding: 15px;
+                width: 80%;
+                max-width: 400px;
+                text-align: center;
+                margin-bottom: 20px;
+                border-radius: 10px;
+                z-index: 2; /* Ensures the rules are above the canvas */
+            }
+            #go-back-btn {
+                margin-top: 10px;
+                padding: 10px;
+                background-color: #ff4500; /* Red-orange color */
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+            #go-back-btn:hover {
+                background-color: #e03e00; /* Darker red-orange color */
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Game Rules Section -->
+        <div id="game-rules">
+            <strong>Game Rules:</strong><br>
+            1. Collect as many apples as you can without hitting yourself.<br>
+            2. Don't do multiple inputs at the same time or too fast, or it could break the game.<br>
+            <a href="scratchpage.html"><button id="go-back-btn">Go Back</button></a>
+        </div>
+
+        <div id="score">Score: 0 | High Score: 0</div>
+        <div id="game-container">
+            <canvas id="game" width="320" height="320"></canvas>
+            <div class="plus-one" id="plus-one">+1</div>
+        </div>
+
+        <!-- Grass and Trees outside the box -->
+        <div class="grass"></div>
+        <div class="tree" style="left: 20px;">
+            <div class="tree-trunk"></div>
+        </div>
+        <div class="tree" style="left: 120px;">
+            <div class="tree-trunk"></div>
+        </div>
+        <div class="tree" style="left: 220px;">
+            <div class="tree-trunk"></div>
+        </div>
+        <div class="tree" style="left: 300px;">
+            <div class="tree-trunk"></div>
+        </div>
+
+        <script>
+            const canvas = document.getElementById('game');
+            const ctx = canvas.getContext('2d');
+
+            const tileSize = 20;
+            const rows = canvas.height / tileSize;
+            const cols = canvas.width / tileSize;
+
+            let snake = [{ x: 10, y: 10 }];
+            let direction = { x: 0, y: 0 };
+            let food = { x: Math.floor(Math.random() * cols), y: Math.floor(Math.random() * rows) };
+            let score = 0;
+            let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getItem('highScore')) : 0;
+
+            const plusOneElement = document.getElementById('plus-one');
+            const scoreElement = document.getElementById('score');
+            let plusOnePosition = null;
+
+            function drawTile(x, y, color) {
+                ctx.fillStyle = color;
+                ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+            }
+
+            function drawSnake() {
+                snake.forEach((segment, index) => {
+                    if (index === 0) {
+                        // Draw the head of the snake with eyes and a tongue
+                        drawTile(segment.x, segment.y, '#0f0');
+                        drawEyes(segment.x, segment.y);
+                        drawTongue(segment.x, segment.y);
+                    } else {
+                        // Draw the body of the snake with darker green lines between each square
+                        drawTile(segment.x, segment.y, '#0f0');
+                        drawSnakeLines(segment.x, segment.y);
+                    }
+                });
+            }
+
+            function drawEyes(x, y) {
+                const eyeSize = 3;
+                const eyeOffsetX = tileSize / 4;
+                const eyeOffsetY = tileSize / 4;
+
+                const eyeDirection = Math.atan2(direction.y, direction.x);
+
+                ctx.save();
+                ctx.translate((x * tileSize) + eyeOffsetX, (y * tileSize) + eyeOffsetY);
+                ctx.rotate(eyeDirection);
+                ctx.beginPath();
+                ctx.arc(0, 0, eyeSize, 0, Math.PI * 2);
+                ctx.fillStyle = 'black';
+                ctx.fill();
+                ctx.restore();
+
+                ctx.save();
+                ctx.translate((x * tileSize) + (tileSize - eyeOffsetX), (y * tileSize) + eyeOffsetY);
+                ctx.rotate(eyeDirection);
+                ctx.beginPath();
+                ctx.arc(0, 0, eyeSize, 0, Math.PI * 2);
+                ctx.fillStyle = 'black';
+                ctx.fill();
+                ctx.restore();
+            }
+
+            function drawTongue(x, y) {
+                const tongueLength = 6;
+                const tongueWidth = 2;
+                const tongueX = (x * tileSize) + tileSize / 2;
+                const tongueY = (y * tileSize) + tileSize;
+
+                ctx.beginPath();
+                ctx.moveTo(tongueX, tongueY);
+                ctx.lineTo(tongueX - tongueWidth / 2, tongueY + tongueLength);
+                ctx.lineTo(tongueX + tongueWidth / 2, tongueY + tongueLength);
+                ctx.closePath();
+                ctx.fillStyle = 'red';
+                ctx.fill();
+            }
+
+            function drawSnakeLines(x, y) {
+                ctx.strokeStyle = '#006400';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(x * tileSize, y * tileSize);
+                ctx.lineTo(x * tileSize + tileSize, y * tileSize);
+                ctx.moveTo(x * tileSize, y * tileSize);
+                ctx.lineTo(x * tileSize, y * tileSize + tileSize);
+                ctx.stroke();
+            }
+
+            function drawFood() {
+                drawTile(food.x, food.y, '#f00');
+                drawFoodStem(food.x, food.y);
+
+                if (plusOnePosition) {
+                    // Draw "+1" near the apple if it was recently eaten
+                    ctx.fillStyle = '#0f0';
+                    ctx.font = '20px Arial';
+                    ctx.fillText('+1', plusOnePosition.x * tileSize + 5, plusOnePosition.y * tileSize + 15);
+                }
+            }
+
+            function drawFoodStem(x, y) {
+                const stemLength = 5;
+                const stemWidth = 2;
+                const stemX = (x * tileSize) + tileSize / 2;
+                const stemY = (y * tileSize) - stemLength;
+
+                ctx.beginPath();
+                ctx.moveTo(stemX, stemY);
+                ctx.lineTo(stemX, stemY - stemLength);
+                ctx.lineWidth = stemWidth;
+                ctx.strokeStyle = '#8B4513';
+                ctx.stroke();
+            }
+
+            function moveSnake() {
+                const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
+                snake.unshift(head);
+
+                if (head.x === food.x && head.y === food.y) {
+                    score++;
+                    plusOnePosition = { x: food.x, y: food.y }; // Save the position for the "+1"
+                    food = { x: Math.floor(Math.random() * cols), y: Math.floor(Math.random() * rows) };
+                    setTimeout(() => {
+                        plusOnePosition = null; // Hide "+1" after half a second
+                    }, 500);
+                } else {
+                    snake.pop();
+                }
+            }
+
+            function checkCollision() {
+                const head = snake[0];
+                if (head.x < 0 || head.x >= cols || head.y < 0 || head.y >= rows) return true;
+                for (let i = 1; i < snake.length; i++) {
+                    if (snake[i].x === head.x && snake[i].y === head.y) return true;
+                }
+                return false;
+            }
+
+            function updateScore() {
+                scoreElement.textContent = `Score: ${score} | High Score: ${highScore}`;
+            }
+
+            function gameLoop() {
+                moveSnake();
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawSnake();
+                drawFood();
+                updateScore();
+
+                if (checkCollision()) {
+                    alert(`Game Over! Your score: ${score}`);
+                    if (score > highScore) {
+                        highScore = score;
+                        localStorage.setItem('highScore', highScore); // Update high score in local storage
+                    }
+                    resetGame();
+                }
+            }
+
+            function resetGame() {
+                snake = [{ x: 10, y: 10 }];
+                direction = { x: 0, y: 0 };
+                score = 0;
+                updateScore();
+                plusOnePosition = null;
+            }
+
+            function changeDirection(event) {
+                switch(event.key) {
+                    case 'ArrowUp':
+                        if (direction.y === 0) {
+                            direction = { x: 0, y: -1 };
+                        }
+                        break;
+                    case 'ArrowDown':
+                        if (direction.y === 0) {
+                            direction = { x: 0, y: 1 };
+                        }
+                        break;
+                    case 'ArrowLeft':
+                        if (direction.x === 0) {
+                            direction = { x: -1, y: 0 };
+                        }
+                        break;
+                    case 'ArrowRight':
+                        if (direction.x === 0) {
+                            direction = { x: 1, y: 0 };
+                        }
+                        break;
+                }
+            }
+
+            document.addEventListener('keydown', changeDirection);
+
+            setInterval(gameLoop, 100);
+        </script>
+    </body>
+    </html>

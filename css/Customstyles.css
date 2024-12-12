@@ -1,0 +1,110 @@
+
+.content-section {
+    font-family: 'Arial', sans-serif;
+    line-height: 1.6;
+    margin: 0;  
+    padding: 0;
+    background-color: #bdbdbd;
+    color: #333;
+}
+
+h1 {
+    text-align: center;
+    background-color: #007bff;
+    color: white;
+    padding: 20px;
+    margin-bottom: 0;
+}
+
+nav {
+    text-align: center;
+    background-color: #0056b3;
+    padding: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+nav a {
+    text-decoration: none;
+    color: white;
+    margin: 0 10px;
+    font-weight: bold;
+    transition: color 0.3s;
+}
+
+nav a:hover {
+    color: #ffcc00;
+}
+
+
+section {
+    margin: 20px auto;
+    padding: 20px;
+    max-width: 800px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+section h2 {
+    color: #007bff;
+}
+
+section p, ul, ol {
+    margin-bottom: 15px;
+}
+
+/* Image Styling */
+img {
+    display: block;
+    margin: 10px auto;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+}
+
+/* Footer Styling */
+.footer {
+    text-align: center;
+    margin-bottom: px 0;
+    font-size: 0.9em;
+}
+
+.footer a {
+    display: inline-block;
+    padding: 10px;
+    background-color: white; /* White background for the box */
+    border: 2px solid #007bff; /* Blue border */
+    border-radius: 5px; /* Rounded corners */
+    text-decoration: none; /* Removes underline */
+    color: #007bff; /* Blue text color */
+    font-weight: bold;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.footer a:hover {
+    background-color: #007bff;
+    color: white;
+}
+
+a{
+color: #007bff;
+text-decoration: none;
+
+
+}
+a:hover{
+color:#ffcc00;
+}
+
+.video {
+margin-left: 150px;
+}
+
+.youtube{
+margin-left: 115px;
+
+}
+
+.tableau{
+margin-left: 70px;
+
+}
